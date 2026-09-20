@@ -4,6 +4,20 @@ All notable user-facing changes to Choc-collab are documented in this file.
 
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (pre-1.0 — minor bumps may include breaking changes).
 
+## [Unreleased]
+
+### Fixed
+
+- New/duplicate batch page hung on "Loading…" on Cloudflare Workers.
+  `/production/new` was served the `/production/_spa/` shell with
+  `id = "new"`, so it waited on a batch that doesn't exist and React threw
+  error #418. The page moved to `/new-batch`, out of `/production/` where
+  the `:id` catch-all was shadowing it; `/production/new` now 301s there.
+  Fork-specific (Workers only); reported upstream as choc-collab/app#168.
+- `AuthGate` rendered different markup on the server and client on the
+  first pass, causing a hydration mismatch. It now renders nothing until
+  after mount, matching the pre-rendered HTML.
+  
 ## [0.9.0] — 2026-09-10
 
 ### Added
