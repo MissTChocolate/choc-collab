@@ -72,7 +72,7 @@ async function createFilling(page: Page, name: string, ingredientName: string) {
 async function createMinimalPlan(page: Page) {
   await createIngredient(page, "Sugar");
   await createFilling(page, "Salted caramel", "Sugar");
-  await page.goto("/production/new");
+  await page.goto("/new-batch");
   await page.getByRole("button", { name: /Fillings only/ }).click();
   await page.getByRole("button", { name: /Add filling/ }).click();
   await page.getByPlaceholder("Search fillings…").fill("Salted");

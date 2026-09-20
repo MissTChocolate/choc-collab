@@ -105,7 +105,7 @@ export function ToMakeList() {
   function startProductionPlan() {
     if (selectedCount === 0) return;
     writeSeedFromTodayList(Array.from(selected));
-    router.push("/production/new?mode=full");
+    router.push("/new-batch?mode=full");
   }
 
   if (scopedRows.length === 0) {

@@ -81,7 +81,7 @@ test.describe("Production wizard — stock warnings", () => {
     await addIngredientToFilling(page, "Pure Cream");
     await createProductWithFilling(page, "Simple Truffle", "Fresh Ganache");
 
-    await page.goto("/production/new?mode=full");
+    await page.goto("/new-batch?mode=full");
     await expect(page.getByText("Simple Truffle")).toBeVisible();
     // No warning strip should be present on this card
     await expect(page.getByText(/ingredient stock alert/i)).not.toBeVisible();
@@ -102,7 +102,7 @@ test.describe("Production wizard — stock warnings", () => {
     await expect(page.getByText(/Low stock/i)).toBeVisible();
 
     // Navigate to production wizard select phase
-    await page.goto("/production/new?mode=full");
+    await page.goto("/new-batch?mode=full");
     await expect(page.getByText("Hazelnut Product")).toBeVisible();
 
     // Warning strip should appear
@@ -124,7 +124,7 @@ test.describe("Production wizard — stock warnings", () => {
     await expect(page.getByText(/Out of stock — on shopping list/i)).toBeVisible();
 
     // Navigate to production wizard
-    await page.goto("/production/new?mode=full");
+    await page.goto("/new-batch?mode=full");
     await expect(page.getByText("Dark Shell Product")).toBeVisible();
 
     // Out-of-stock warning strip should appear
@@ -144,7 +144,7 @@ test.describe("Production wizard — stock warnings", () => {
     await page.getByText("Yes, add to list").click();
 
     // Go to wizard and expand the warning
-    await page.goto("/production/new?mode=full");
+    await page.goto("/new-batch?mode=full");
     await expect(page.getByText("Milk Ganache Product")).toBeVisible();
 
     const warningToggle = page.getByRole("button", { name: /ingredient stock alert/i });
@@ -166,7 +166,7 @@ test.describe("Production wizard — stock warnings", () => {
     await page.getByRole("button", { name: "Mark out of stock" }).click();
     await page.getByText("Yes, add to list").click();
 
-    await page.goto("/production/new?mode=full");
+    await page.goto("/new-batch?mode=full");
     await expect(page.getByText("White Shell Product")).toBeVisible();
 
     const warningToggle = page.getByRole("button", { name: /ingredient.*out of stock/i });
@@ -192,7 +192,7 @@ test.describe("Production wizard — stock warnings", () => {
     await expect(page.getByText(/Ordered/i)).toBeVisible();
 
     // Wizard — expand warning and check label
-    await page.goto("/production/new?mode=full");
+    await page.goto("/new-batch?mode=full");
     await expect(page.getByText("Vanilla Caramel Product")).toBeVisible();
 
     const warningToggle = page.getByRole("button", { name: /ingredient stock alert/i });
@@ -223,7 +223,7 @@ test.describe("Production wizard — stock warnings", () => {
 
     // In the wizard, the flagged product ("ZZZ Spiced Product") should appear before
     // the clean product ("AAA Clean Product") despite sorting lower alphabetically
-    await page.goto("/production/new?mode=full");
+    await page.goto("/new-batch?mode=full");
     const items = page.getByRole("listitem");
     await expect(items.first()).toContainText("ZZZ Spiced Product");
   });

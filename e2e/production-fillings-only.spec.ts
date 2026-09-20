@@ -29,7 +29,7 @@ test.describe("Fillings-only production plans", () => {
     await createIngredient(page, "Sugar");
     await createFilling(page, "Salted caramel", "Sugar");
 
-    await page.goto("/production/new");
+    await page.goto("/new-batch");
     await page.getByRole("button", { name: /Fillings only/ }).click();
     await expect(page.getByText(/Fillings to make/)).toBeVisible();
 
@@ -61,7 +61,7 @@ test.describe("Fillings-only production plans", () => {
     await createIngredient(page, "Cream");
     await createFilling(page, "Dark ganache", "Cream");
 
-    await page.goto("/production/new?mode=fillings-only");
+    await page.goto("/new-batch?mode=fillings-only");
     await page.getByRole("button", { name: /Add filling/ }).click();
     await page.getByRole("button", { name: /Dark ganache/ }).click();
     await page.getByLabel(/Target grams for Dark ganache/).fill("750");
@@ -84,7 +84,7 @@ test.describe("Fillings-only production plans", () => {
     await createIngredient(page, "Butter");
     await createFilling(page, "Praline paste", "Butter");
 
-    await page.goto("/production/new?mode=fillings-only");
+    await page.goto("/new-batch?mode=fillings-only");
     await page.getByRole("button", { name: /Add filling/ }).click();
     await page.getByRole("button", { name: /Praline paste/ }).click();
     await page.getByLabel(/Target grams for Praline paste/).fill("400");
@@ -108,7 +108,7 @@ test.describe("Fillings-only production plans", () => {
     await createIngredient(page, "Milk");
     await createFilling(page, "Milk ganache", "Milk");
 
-    await page.goto("/production/new?mode=fillings-only");
+    await page.goto("/new-batch?mode=fillings-only");
     await page.getByRole("button", { name: /Add filling/ }).click();
     await page.getByRole("button", { name: /Milk ganache/ }).click();
     await page.getByRole("button", { name: /Create plan/ }).click();
@@ -123,7 +123,7 @@ test.describe("Fillings-only production plans", () => {
     await createIngredient(page, "Honey");
     await createFilling(page, "Honey caramel", "Honey"); // 100g base recipe
 
-    await page.goto("/production/new?mode=fillings-only");
+    await page.goto("/new-batch?mode=fillings-only");
     await page.getByRole("button", { name: /Add filling/ }).click();
     await page.getByRole("button", { name: /Honey caramel/ }).click();
     // Target 300g → ×3 the base → ingredient scales to 300g of Honey.
@@ -148,7 +148,7 @@ test.describe("Fillings-only production plans", () => {
   });
 
   test("Fillings-only card on plan-type picker is keyboard accessible", async ({ page }) => {
-    await page.goto("/production/new");
+    await page.goto("/new-batch");
     const fillingsOnly = page.getByRole("button", { name: /Fillings only/ });
     await fillingsOnly.focus();
     await expect(fillingsOnly).toBeFocused();
@@ -166,7 +166,7 @@ test.describe("Hybrid plans — adding extra filling batches from plan detail", 
     await createFilling(page, "Cocoa nib crunch", "Cocoa");
 
     // Create a fillings-only plan with one batch
-    await page.goto("/production/new?mode=fillings-only");
+    await page.goto("/new-batch?mode=fillings-only");
     await page.getByRole("button", { name: /Add filling/ }).click();
     await page.getByRole("button", { name: /Almond praline/ }).click();
     await page.getByRole("button", { name: /Create plan/ }).click();
@@ -198,7 +198,7 @@ test.describe("Hybrid plans — adding extra filling batches from plan detail", 
     await createIngredient(page, "Vanilla");
     await createFilling(page, "Vanilla caramel", "Vanilla");
 
-    await page.goto("/production/new?mode=fillings-only");
+    await page.goto("/new-batch?mode=fillings-only");
     await page.getByRole("button", { name: /Add filling/ }).click();
     await page.getByRole("button", { name: /Vanilla caramel/ }).click();
     await page.getByRole("button", { name: /Create plan/ }).click();

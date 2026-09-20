@@ -186,7 +186,7 @@ export default function ProductionPage() {
           </div>
 
           <Link
-            href="/production/new"
+            href="/new-batch"
             className="rounded-full bg-accent text-accent-foreground p-2 inline-flex shrink-0"
             aria-label="New plan"
           >
@@ -544,7 +544,7 @@ function PlanRow({
             </Link>
           )}
           <Link
-            href={`/production/new?from=${encodeURIComponent(plan.id ?? '')}`}
+            href={`/new-batch?from=${encodeURIComponent(plan.id ?? '')}`}
             className="p-1.5 rounded-full hover:bg-muted transition-colors"
             aria-label="Duplicate batch"
             title="Duplicate batch"

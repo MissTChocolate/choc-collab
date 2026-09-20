@@ -74,7 +74,7 @@ async function createMould(page: Page, name: string) {
 
 /** Full moulded-product plan via the wizard (~15 pieces of `productName`). */
 async function createFullPlan(page: Page, productName: string, mouldName: string) {
-  await page.goto("/production/new?mode=full");
+  await page.goto("/new-batch?mode=full");
   await page.getByText(productName).click();
   await page.getByRole("button", { name: /Continue.*selected/ }).click();
   const mouldVal = await page.locator("select.input option", { hasText: mouldName }).getAttribute("value");

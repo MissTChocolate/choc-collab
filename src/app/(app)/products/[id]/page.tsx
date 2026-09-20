@@ -245,7 +245,7 @@ export default function ProductDetailPage() {
             {subtitle && <p className="text-sm text-muted-foreground truncate">{subtitle}</p>}
           </div>
         </div>
-        <Link href="/production/new" className="btn-primary px-4 py-2 text-sm shrink-0 whitespace-nowrap">
+        <Link href="/new-batch" className="btn-primary px-4 py-2 text-sm shrink-0 whitespace-nowrap">
           Start production run
         </Link>
       </div>

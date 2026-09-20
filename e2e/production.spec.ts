@@ -16,18 +16,18 @@ test.describe("Production", () => {
   test("navigates to new plan wizard", async ({ page }) => {
     await page.goto("/production");
     await page.getByRole("link", { name: "New plan" }).click();
-    await expect(page).toHaveURL("/production/new/");
+    await expect(page).toHaveURL("/new-batch/");
   });
 
   test("new plan wizard shows plan-type picker first", async ({ page }) => {
-    await page.goto("/production/new");
+    await page.goto("/new-batch");
     // Wizard lands on the plan-type step — two cards are visible
     await expect(page.getByRole("button", { name: /Full production/ })).toBeVisible();
     await expect(page.getByRole("button", { name: /Fillings only/ })).toBeVisible();
   });
 
   test("?mode=full skips the plan-type picker and jumps to product select", async ({ page }) => {
-    await page.goto("/production/new?mode=full");
+    await page.goto("/new-batch?mode=full");
     // Plan-type cards are not shown
     await expect(page.getByRole("button", { name: /Full production/ })).not.toBeVisible();
     // Product select phase is visible even with no products (shows the empty label)

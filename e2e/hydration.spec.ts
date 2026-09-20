@@ -8,7 +8,7 @@ import { test, expect, type Page, type ConsoleMessage } from "@playwright/test";
  * serves. `next dev` (Turbopack) does not static-export, so the main e2e suite
  * cannot see these. Example class of bug: a `<Suspense fallback={<JSX/>}>`
  * wrapping a `useSearchParams()` consumer, which React 19's production build
- * refuses to reconcile and throws as minified error #418 (seen on /production/new).
+ * refuses to reconcile and throws as minified error #418 (seen on /new-batch).
  *
  * Each route gets loaded from a clean page context, and the test fails if either:
  *   - an uncaught page error fires (page.on("pageerror"))
@@ -29,7 +29,7 @@ const ROUTES = [
   "/fillings",
   "/moulds",
   "/production",
-  "/production/new",
+  "/new-batch",
   "/stock",
   "/shopping",
   "/collections",
@@ -77,7 +77,7 @@ for (const route of ROUTES) {
 
     // Contract check on the RAW HTML — runs before the browser touches it.
     // Catches routing bugs where the server rewrites a static URL to a different
-    // page (e.g. Cloudflare's _redirects catch-all eating /production/new and
+    // page (e.g. Cloudflare's _redirects catch-all eating /new-batch and
     // returning the /production/_spa/ SPA shell). Those would still "hydrate"
     // without errors but serve the wrong page under the right URL.
     const raw = await request.get(route).then((r) => r.text());
