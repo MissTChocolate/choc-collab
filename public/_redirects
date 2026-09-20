@@ -33,9 +33,9 @@
 # page is rewritten to /production/_spa/, breaking the page on Cloudflare.
 # First-match-wins order: the pass-throughs below match "new" verbatim, so the
 # catch-all never sees it.
+/production/new              /production/new/index.html         200
+/production/new/             /production/new/index.html         200
 /production/new/*            /production/new/:splat             200
-/production/new/             /production/new/                   200
-/production/new              /production/new/                   200
 /production/:id/products/*   /production/_spa/products/:splat   200
 /production/*/products/      /production/_spa/products/         200
 /production/:id/products     /production/_spa/products/         200
