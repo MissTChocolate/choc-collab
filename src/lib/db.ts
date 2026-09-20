@@ -1,6 +1,7 @@
 import Dexie, { type EntityTable } from "dexie";
 import dexieCloud from "dexie-cloud-addon";
-import type { Ingredient, Product, ProductCategory, Filling, FillingCategory, ProductFilling, FillingIngredient, FillingComponent, Mould, ProductionPlan, PlanProduct, PlanFilling, PlanStepStatus, AppSetting, UserPreferences, ProductFillingHistory, IngredientPriceHistory, CoatingChocolateMapping, ProductCostSnapshot, Experiment, ExperimentIngredient, Packaging, PackagingOrder, ShoppingItem, Collection, CollectionProduct, CollectionPackaging, CollectionPricingSnapshot, DecorationMaterial, DecorationCategory, ShellDesign, FillingStock, IngredientCategory, Sale, GiveAwayRecord, LabelTemplate } from "@/types";
+import type { Ingredient, Product, ProductCategory, Filling, FillingCategory, ProductFilling, FillingIngredient, FillingComponent, Mould, ProductionPlan, PlanProduct, PlanFilling, PlanStepStatus, AppSetting, UserPreferences, ProductFillingHistory, IngredientPriceHistory, CoatingChocolateMapping, ProductCostSnapshot, Experiment, ExperimentIngredient, Packaging, PackagingOrder, ShoppingItem, Collection, CollectionProduct, CollectionPackaging, CollectionPricingSnapshot, DecorationMaterial, DecorationCategory, ShellDesign, FillingStock, IngredientCategory, Sale, GiveAwayRecord, LabelTemplate, Order, Customer, OrderProductionLink, OrderLineItem, LogEntry, LogDay } from "@/types";
+import { normalizeCustomerKey } from "@/lib/orders";
 import { DEFAULT_PRODUCT_CATEGORIES, DEFAULT_DECORATION_CATEGORIES, DEFAULT_SHELL_DESIGNS, DEFAULT_FILLING_CATEGORIES, DEFAULT_INGREDIENT_CATEGORIES } from "@/types";
 
 const db = new Dexie("ChocolatierDB", { addons: [dexieCloud] }) as Dexie & {
@@ -40,6 +41,12 @@ const db = new Dexie("ChocolatierDB", { addons: [dexieCloud] }) as Dexie & {
   sales: EntityTable<Sale, "id">;
   giveaways: EntityTable<GiveAwayRecord, "id">;
   labelTemplates: EntityTable<LabelTemplate, "id">;
+  orders: EntityTable<Order, "id">;
+  customers: EntityTable<Customer, "id">;
+  orderProductionLinks: EntityTable<OrderProductionLink, "id">;
+  orderLineItems: EntityTable<OrderLineItem, "id">;
+  logEntries: EntityTable<LogEntry, "id">;
+  logDays: EntityTable<LogDay, "id">;
 };
 
 // v1 — clean schema with the open-source naming (Product/Filling).
@@ -481,7 +488,7 @@ db.version(13).stores({}).upgrade(async (tx) => {
     if (m?.id) mouldById.set(m.id, { cavityWeightG: m.cavityWeightG ?? 0 });
   }
 
-  const DENSITY = 1.2; // g/ml — keep in sync with DENSITY_G_PER_ML in production.ts
+  const DENSITY = 1.2; // g/ml — the ganache density this historical (v13) grams→fraction conversion assumed
 
   for (const p of products) {
     if (!p?.id) continue;
@@ -552,6 +559,104 @@ db.version(15).stores({
   labelTemplates: "id, name, application, updatedAt",
 });
 
+// v16 — Rescale ProductFilling.fillFraction from a *volume* fraction to a *mass*
+// fraction. The v13 conversion stored `grams / DENSITY / cavityWeightG` (a
+// fraction of cavity *volume*), and the cost/nutrition/production engine then
+// multiplied ganache density back in on the way out. That density round-trip
+// only applied to the filling — never the shell — so filling + shell no longer
+// summed to the mould's stated cavity weight (a 13 g mould showed 9 g fill +
+// 5.5 g shell = 14.5 g, and the derived shell % was skewed). cavityWeightG is a
+// mass ("fully filled solid cavity"), so fractions are now mass fractions and the
+// density factor has been removed from the fill math everywhere. Multiply each
+// stored fraction by DENSITY (1.2) to preserve the grams the user originally
+// entered, clamping to [0, 1] (matches the derived-shell-% clamp for over-fills).
+db.version(16).stores({}).upgrade(async (tx) => {
+  const DENSITY = 1.2; // g/ml — matches the factor removed from the fill math
+  const productFillingsTable = tx.table("productFillings");
+  const rows = await productFillingsTable.toArray();
+  for (const r of rows) {
+    if (!r?.id) continue;
+    const frac = (r as { fillFraction?: number }).fillFraction;
+    if (frac == null) continue;
+    const rescaled = Math.min(1, Math.max(0, frac * DENSITY));
+    await productFillingsTable.update(r.id, { fillFraction: rescaled });
+  }
+});
+
+// v17 — Orders & Events table (corporate orders / event bookings captured
+// ahead of time, refined as the date approaches). Purely additive — no
+// existing rows touched, no upgrade hook required.
+//
+// Indexed on `status` for lifecycle filtering and `eventDate` (ISO date
+// string) so the list/calendar views can `orderBy("eventDate")` directly —
+// lexicographic ISO-date sort is chronological, same trick as
+// `collections.startDate`.
+db.version(17).stores({
+  orders: "id, status, eventDate",
+});
+
+// v18 — Customers table + order→customer FK + order→production-plan links.
+//
+// `orders` is restated to add the `customerId` index. The upgrade hook
+// materialises the v17 free-text `customerName` into Customer rows (deduped
+// case-insensitively) and drops the old prop.
+//
+// `orderProductionLinks` is a join table: which production batches fulfil
+// which order — indexed both ways for the order detail page (by orderId)
+// and plan-deletion cleanup (by planId).
+db.version(18).stores({
+  orders: "id, status, eventDate, customerId",
+  customers: "id, name",
+  orderProductionLinks: "id, orderId, planId",
+}).upgrade(async (tx) => {
+  // NOTE: the AUTO_ID creating-hooks are bound to the db.* table objects and
+  // do not fire on tx.table() inside upgrade transactions — generate ids
+  // explicitly with newId() (hoisted function declaration; v2/v4/v5/v6 do
+  // the same).
+  const ordersTable = tx.table("orders");
+  const customersTable = tx.table("customers");
+  const now = new Date();
+  const idByKey = new Map<string, string>();
+  const rows = await ordersTable.toArray();
+  for (const o of rows) {
+    if (!o?.id) continue;
+    const raw = ((o as { customerName?: string }).customerName ?? "").toString().trim();
+    if (!raw) continue;
+    const key = normalizeCustomerKey(raw);
+    let cid = idByKey.get(key);
+    if (!cid) {
+      cid = newId();
+      await customersTable.add({ id: cid, name: raw, createdAt: now, updatedAt: now });
+      idByKey.set(key, cid);
+    }
+    // `customerName: undefined` deletes the prop (v13 precedent).
+    await ordersTable.update(o.id, { customerId: cid, customerName: undefined });
+  }
+});
+
+// v19 — Order line items ("40 bonbons, mix TBD" that firms up into real
+// products with quantities). Purely additive — no existing rows touched,
+// no upgrade hook required. Indexed on `orderId` for the per-order lookup.
+//
+// (OrderProductionLink also gained optional productId/quantity fields in the
+// same change — unindexed, so no schema restatement needed; legacy bare rows
+// read back with productId undefined, meaning "whole batch, unspecified".)
+db.version(19).stores({
+  orderLineItems: "id, orderId",
+});
+
+// v20 — Daily Log: free-text `logEntries` (several per day) and `logDays`
+// (one row of day-level facts such as workshop temperature/humidity). Both
+// keyed on a local ISO date string, indexed on `date` so the day page can
+// `where("date").equals(iso)` and the list can `orderBy("date")`. Purely
+// additive — no existing rows touched, no upgrade hook required. The daily
+// summary itself is derived from the other tables (lib/dailyLog) and never
+// stored.
+db.version(20).stores({
+  logEntries: "id, date",
+  logDays: "id, date",
+});
+
 const cloudUrl = process.env.NEXT_PUBLIC_DEXIE_CLOUD_URL;
 export const isCloudConfigured = Boolean(cloudUrl);
 
@@ -595,6 +700,12 @@ const AUTO_ID_TABLES = [
   db.sales,
   db.giveaways,
   db.labelTemplates,
+  db.orders,
+  db.customers,
+  db.orderProductionLinks,
+  db.orderLineItems,
+  db.logEntries,
+  db.logDays,
 ];
 for (const table of AUTO_ID_TABLES) {
    
