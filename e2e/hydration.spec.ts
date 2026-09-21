@@ -35,7 +35,7 @@ const ROUTES = [
   "/collections",
   "/settings",
   "/labels",
-  "/labels/new",
+  "/new-label",
   "/orders",
   "/log",
 ] as const;

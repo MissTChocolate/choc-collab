@@ -56,7 +56,7 @@ export default function LabelsGalleryPage() {
       <div className="px-4 pb-8 space-y-4">
         <div className="flex items-center justify-end">
           <Link
-            href="/labels/new"
+            href="/new-label"
             className="flex items-center gap-1.5 rounded-full bg-primary text-primary-foreground px-3 py-1.5 text-sm font-medium hover:opacity-90"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -72,7 +72,7 @@ export default function LabelsGalleryPage() {
               Create one to design a printable layout for box labels, filling stickers, or retail boxes.
             </p>
             <Link
-              href="/labels/new"
+              href="/new-label"
               className="inline-flex items-center gap-1.5 mt-4 rounded-full bg-primary text-primary-foreground px-3 py-1.5 text-sm font-medium hover:opacity-90"
             >
               <Plus className="w-3.5 h-3.5" />

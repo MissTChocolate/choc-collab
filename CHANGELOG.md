@@ -14,6 +14,14 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
   error #418. The page moved to `/new-batch`, out of `/production/` where
   the `:id` catch-all was shadowing it; `/production/new` now 301s there.
   Fork-specific (Workers only); reported upstream as choc-collab/app#168.
+- New label template page had the same Workers routing bug as new batches
+  (`/labels/new` shadowed by the `/labels/:id` catch-all). Moved to
+  `/new-label`; `/labels/new` now 301s there. Flagged by the upstream
+  maintainer on choc-collab/app#168.
+- Added `src/app/workers-routing.test.ts`, which fails `npm test` if a static
+  page ever sits beside a dynamic `[id]` route or `_redirects` gains a
+  self-referential `200` pass-through. Run the tests after every upstream
+  merge; a failure here means upstream added a new page of this shape.
 - `AuthGate` rendered different markup on the server and client on the
   first pass, causing a hydration mismatch. It now renders nothing until
   after mount, matching the pre-rendered HTML.
