@@ -31,6 +31,10 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
   until the user is signed in and the first sync has completed
   (`src/lib/seedGate.ts`). Local-only mode is unchanged. Existing duplicates
   are not removed by this fix.
+- Signed-in users were shown "Sign in to continue" on every page load after
+  the fix above. Dexie Cloud only loads a saved session when the database
+  opens, and SeedLoader had been opening it as a side effect; once seeding
+  waited for sign-in, nothing did. `AuthGate` now opens the database itself.
 - `AuthGate` rendered different markup on the server and client on the
   first pass, causing a hydration mismatch. It now renders nothing until
   after mount, matching the pre-rendered HTML.

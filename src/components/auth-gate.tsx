@@ -22,6 +22,19 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
+
+    // `db.cloud.currentUser` starts as a placeholder "unauthorized" user and
+    // only reflects a saved session once the database has opened — Dexie Cloud
+    // loads it in its ready hook. Dexie opens lazily on first access, and this
+    // gate hides every page (and so every query) until the user is signed in,
+    // so without an explicit open nothing ever loads the session: a returning
+    // user is shown "Sign in" on every page load. This used to work only
+    // because SeedLoader touched the database on mount; now that seeding waits
+    // for sign-in (see seedGate.ts), the dependency has to be explicit.
+    //
+    // Safe when signed out: with requireAuth, open() simply stays pending until
+    // login completes, exactly as it did when SeedLoader triggered it.
+    db.open().catch((e) => console.error("Failed to open database:", e));
   }, []);
 
   if (!isCloudConfigured) return <>{children}</>;

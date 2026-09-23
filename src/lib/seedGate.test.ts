@@ -256,6 +256,15 @@ describe("SeedLoader wiring", () => {
     "seedIfNeeded(",
   ];
 
+  it("AuthGate opens the database itself", () => {
+    // Dexie Cloud only loads a saved session once the database opens, and
+    // opening is lazy. SeedLoader used to trigger it on mount; now that it
+    // waits for sign-in, nothing else would — and every returning user would
+    // be shown "Sign in" on each page load. AuthGate must open it explicitly.
+    const gate = readFileSync(join(import.meta.dirname, "..", "components", "auth-gate.tsx"), "utf8");
+    expect(gate, "auth-gate.tsx must call db.open() so saved sessions load").toContain("db.open()");
+  });
+
   it("waits for the gate before any seeding call", () => {
     const gateAt = src.indexOf("waitUntilSafeToSeed(");
     expect(gateAt, "seed-loader.tsx must call waitUntilSafeToSeed").toBeGreaterThan(-1);
