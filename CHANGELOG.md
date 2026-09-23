@@ -22,6 +22,15 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
   page ever sits beside a dynamic `[id]` route or `_redirects` gains a
   self-referential `200` pass-through. Run the tests after every upstream
   merge; a failure here means upstream added a new page of this shape.
+- Default categories multiplied every time the app was opened in a fresh
+  browser (new device, incognito window, cleared site data) with Dexie Cloud
+  sync on. Startup seeding read the local database before the initial sync
+  had downloaded anything, saw every default as missing, and inserted a new
+  set that then synced up alongside the real ones. Affected product, filling,
+  ingredient and decoration categories and shell designs. Seeding now waits
+  until the user is signed in and the first sync has completed
+  (`src/lib/seedGate.ts`). Local-only mode is unchanged. Existing duplicates
+  are not removed by this fix.
 - `AuthGate` rendered different markup on the server and client on the
   first pass, causing a hydration mismatch. It now renders nothing until
   after mount, matching the pre-rendered HTML.
