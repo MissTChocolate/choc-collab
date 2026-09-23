@@ -38,6 +38,7 @@ const ROUTES = [
   "/new-label",
   "/orders",
   "/log",
+  "/maintenance",
 ] as const;
 
 // React minifies error messages in production. The error text we want to detect

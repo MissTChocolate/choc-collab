@@ -6,6 +6,18 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### Added
+
+- **Maintenance page at `/maintenance`** (not in the navigation) that removes
+  the duplicate categories and shell designs left by the seeding race below.
+  It previews exactly what will change, stays locked until the browser is
+  fully synced, downloads a recovery file first, and asks for confirmation.
+  For product categories it keeps the copy your products use and moves any
+  products off the copies it removes; for the rest it keeps one row per name
+  (or slug), which keeps every link intact. Copies that differ in a real
+  setting — colour, shelf-stable, shell range, archived — are listed and left
+  alone rather than guessed at.
+
 ### Fixed
 
 - New/duplicate batch page hung on "Loading…" on Cloudflare Workers.
