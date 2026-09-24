@@ -9,8 +9,8 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 ### Added
 
 - **Maintenance page at `/maintenance`** (not in the navigation) that removes
-  the duplicate categories and shell designs left by the seeding race below.
-  It previews exactly what will change, stays locked until the browser is
+  the duplicate categories and shell designs left by the seeding race fixed
+  in 0.9.2. It previews exactly what will change, stays locked until the browser is
   fully synced, downloads a recovery file first, and asks for confirmation.
   For product categories it keeps the copy your products use and moves any
   products off the copies it removes; for the rest it keeps one row per name
@@ -34,23 +34,18 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
   page ever sits beside a dynamic `[id]` route or `_redirects` gains a
   self-referential `200` pass-through. Run the tests after every upstream
   merge; a failure here means upstream added a new page of this shape.
-- Default categories multiplied every time the app was opened in a fresh
-  browser (new device, incognito window, cleared site data) with Dexie Cloud
-  sync on. Startup seeding read the local database before the initial sync
-  had downloaded anything, saw every default as missing, and inserted a new
-  set that then synced up alongside the real ones. Affected product, filling,
-  ingredient and decoration categories and shell designs. Seeding now waits
-  until the user is signed in and the first sync has completed
-  (`src/lib/seedGate.ts`). Local-only mode is unchanged. Existing duplicates
-  are not removed by this fix.
-- Signed-in users were shown "Sign in to continue" on every page load after
-  the fix above. Dexie Cloud only loads a saved session when the database
-  opens, and SeedLoader had been opening it as a side effect; once seeding
-  waited for sign-in, nothing did. `AuthGate` now opens the database itself.
+- The seeding race that duplicated default categories (and the follow-on
+  "Sign in to continue" loop) is fixed upstream in 0.9.2 (choc-collab/app#171),
+  merged below; the fork now carries upstream's version of that fix.
 - `AuthGate` rendered different markup on the server and client on the
   first pass, causing a hydration mismatch. It now renders nothing until
   after mount, matching the pre-rendered HTML.
-  
+
+## [0.9.2] — 2026-09-24
+
+### Fixed
+- **Opening the app on a new device no longer adds a second set of default categories** — with sync switched on, every fresh browser (a new device, an incognito window, or one whose site data you'd cleared) quietly added its own copy of the default product, filling, ingredient and decoration categories and the default shell designs. Do that a few times and the pantry lists read "Ganaches, Ganaches, Ganaches". The seeder fills in whatever it can't find, and on a brand-new browser it ran before the first sync had finished downloading — so it couldn't find anything, and inserted a full set that then synced up alongside the real one. Seeding now waits until your own data has arrived before deciding anything is missing, and skips the session entirely if it never does. This stops new copies appearing; it doesn't remove ones already made, so a cleanup pass will follow separately. Local-only installs never had the problem and are unchanged. (#171)
+
 ## [0.9.1] — 2026-09-21
 
 ### Added

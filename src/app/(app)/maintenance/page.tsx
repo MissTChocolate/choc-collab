@@ -13,7 +13,7 @@
 import { useEffect, useState } from "react";
 import { useLiveQuery, useObservable } from "dexie-react-hooks";
 import { db, isCloudConfigured } from "@/lib/db";
-import { isSafeToSeed } from "@/lib/seedGate";
+import { decideSeedGate } from "@/lib/seedGate";
 import { planDedupe, TABLE_LABELS, type DedupeTable } from "@/lib/dedupePlan";
 import { applyDedupe, readDedupeSnapshot, type DedupeResult } from "@/lib/dedupe";
 import { PageHeader } from "@/components/page-header";
@@ -28,12 +28,15 @@ export default function MaintenancePage() {
   useObservable(db.cloud.currentUser);
   useObservable(db.cloud.syncState);
   useObservable(db.cloud.persistedSyncState);
-  const syncReady = isSafeToSeed({
-    cloudConfigured: isCloudConfigured,
-    currentUser: db.cloud.currentUser,
-    syncState: db.cloud.syncState,
-    persistedSyncState: db.cloud.persistedSyncState,
-  });
+  // Same three conditions the seeder waits for: signed in, first sync done,
+  // and not mid-sync. Local-only installs have nothing to wait for.
+  const syncReady =
+    !isCloudConfigured ||
+    decideSeedGate({
+      isLoggedIn: Boolean(db.cloud.currentUser.value?.isLoggedIn),
+      initiallySynced: Boolean(db.cloud.persistedSyncState.value?.initiallySynced),
+      phase: db.cloud.syncState.value?.phase,
+    }).ready;
 
   const plan = useLiveQuery(async () => planDedupe(await readDedupeSnapshot()));
 

@@ -7,34 +7,23 @@ import { db, isCloudConfigured } from "@/lib/db";
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const currentUser = useObservable(db.cloud.currentUser);
 
-  // Hydration guard: the static export is pre-rendered with no Dexie Cloud
-  // session, so the server always emits `null` here. In the browser,
-  // `currentUser` can resolve synchronously on the very first render, which
-  // made the client emit the sign-in UI (or children) while the server HTML
-  // was empty — a hydration mismatch that React 19's production build reports
-  // as minified error #418. Inside the `<Suspense fallback={null}>` on
-  // /production/new that mismatch is unrecoverable and leaves the page stuck
-  // on its fallback forever.
-  //
-  // Rendering `null` until after mount makes the first client render identical
-  // to the server HTML; the real UI appears on the effect-driven re-render a
-  // tick later. See AGENT.md → "Static-export hydration gotchas".
+  // Fork-specific hydration guard: the static export is pre-rendered with no
+  // Dexie Cloud session, so the server always emits `null` here, but in the
+  // browser `currentUser` can resolve on the very first render. Rendering
+  // `null` until after mount keeps the first client render identical to the
+  // server HTML (React error #418 otherwise).
   const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
+  useEffect(() => setMounted(true), []);
 
-    // `db.cloud.currentUser` starts as a placeholder "unauthorized" user and
-    // only reflects a saved session once the database has opened — Dexie Cloud
-    // loads it in its ready hook. Dexie opens lazily on first access, and this
-    // gate hides every page (and so every query) until the user is signed in,
-    // so without an explicit open nothing ever loads the session: a returning
-    // user is shown "Sign in" on every page load. This used to work only
-    // because SeedLoader touched the database on mount; now that seeding waits
-    // for sign-in (see seedGate.ts), the dependency has to be explicit.
-    //
-    // Safe when signed out: with requireAuth, open() simply stays pending until
-    // login completes, exactly as it did when SeedLoader triggered it.
-    db.open().catch((e) => console.error("Failed to open database:", e));
+  // Dexie opens lazily, and `db.cloud.currentUser` only picks up a saved session
+  // once that open runs the addon's ready hook. The seed loader used to be the
+  // first thing to touch a table; now that it waits for sync, nothing else would
+  // open the database and a signed-in returning user would sit on the sign-in
+  // screen forever. With `requireAuth` this stays pending while signed out, which
+  // is what it already did when the seed loader triggered it.
+  useEffect(() => {
+    if (!isCloudConfigured) return;
+    db.open().catch((e) => console.error("db.open failed:", e));
   }, []);
 
   if (!isCloudConfigured) return <>{children}</>;
